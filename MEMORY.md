@@ -61,3 +61,4 @@
 - Причина `no embedded image`: часть PPTX-shape не содержит обычный embedded PNG/JPG, поэтому `python-pptx` падает до вызова ИИ. Добавлен fallback: рендер всего слайда через Microsoft PowerPoint COM (`pywin32`) и описание слайда vision-моделью.
 - Служебная строка `Описание визуальных элементов` не должна быть Markdown-заголовком, чтобы не конкурировать с настоящими заголовками слайда; теперь это quote-блок.
 - Добавлена иконка приложения: `a3_pdf_markdown/assets/app_icon.ico` и `app_icon.png`. Иконка подключена к `QApplication` и `MainWindow`, для Windows задан AppUserModelID.
+- Добавлен запуск двойным кликом: `A3 PDF Markdown.vbs` без консоли и `A3 PDF Markdown.cmd` для debug-запуска с консолью.

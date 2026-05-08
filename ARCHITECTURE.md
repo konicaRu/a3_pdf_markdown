@@ -181,6 +181,7 @@ https://github.com/konicaRu/a3_pdf_markdown.git
 
 - PySide6 окно с выбором папок, настройками OCR/Vision, provider selector, Start/Stop.
 - App icon: `a3_pdf_markdown/assets/app_icon.ico`, подключается к `QApplication` и `MainWindow`; на Windows задается AppUserModelID для корректной иконки в панели задач.
+- Запуск двойным кликом: `A3 PDF Markdown.vbs` стартует GUI через `.venv\Scripts\pythonw.exe` без консоли; `A3 PDF Markdown.cmd` оставлен как debug-запуск с видимой консолью.
 - Background job через `QThread`, UI не должен блокироваться во время обработки.
 - Сохранение настроек в `%USERPROFILE%/.a3_pdf_markdown/config.json`.
 - Сбор файлов `.pdf`, `.docx`, `.pptx`, `.xlsx`.

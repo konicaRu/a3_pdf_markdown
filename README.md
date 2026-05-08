@@ -19,6 +19,20 @@ Desktop-приложение для конвертации PDF, DOCX, PPTX и XL
 
 ## Запуск
 
+Двойным кликом по файлу:
+
+```text
+A3 PDF Markdown.vbs
+```
+
+Если нужно увидеть ошибку запуска в консоли:
+
+```text
+A3 PDF Markdown.cmd
+```
+
+Из PowerShell:
+
 ```powershell
 uv run a3-pdf-markdown
 ```
