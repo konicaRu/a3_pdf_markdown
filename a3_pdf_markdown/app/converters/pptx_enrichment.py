@@ -232,9 +232,10 @@ class PptxEnricher:
             enriched = enriched.rstrip() + "".join(extra) + "\n"
         if slide_level:
             inserted = True
-            extra = ["\n\n### Описание визуальных элементов слайда\n"]
+            extra = ["\n\n> **Описание визуальных элементов:**\n"]
             for item in slide_level:
-                extra.append(f"\n{item.description}\n")
+                quoted = "\n".join(f"> {line}" for line in item.description.splitlines())
+                extra.append(f"{quoted}\n")
             enriched = enriched.rstrip() + "".join(extra)
         return enriched, inserted
 
