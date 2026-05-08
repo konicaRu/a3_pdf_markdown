@@ -298,9 +298,7 @@ class MainWindow(QMainWindow):
 
     @Slot(object)
     def _handle_result(self, result: FileResult) -> None:
-        if result.ok:
-            return
-        self._append_log(LogEvent(LogLevel.ERROR, result.error or "Неизвестная ошибка"))
+        return
 
     @Slot(object)
     def _finished(self, stats: RunStats) -> None:

@@ -187,6 +187,7 @@ https://github.com/konicaRu/a3_pdf_markdown.git
 - Опциональное приведение имени выходного `.md` файла к нижнему регистру.
 - Атомарная запись результата через временный `.tmp` файл.
 - MarkItDown для DOCX/PPTX/XLSX.
+- Fallback для DOCX/PPTX/XLSX: если MarkItDown+LLM падает на embedded image/vision hook, файл повторно конвертируется обычным MarkItDown без LLM.
 - Отдельный PDF pipeline:
   - текстовый слой через PyMuPDF;
   - EasyOCR, если текстовый слой слабый;

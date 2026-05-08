@@ -19,18 +19,34 @@ class DocumentConverterService:
         self.log = log
         self.pdf_pipeline = PdfPipeline(config, log)
         self._markitdown = None
+        self._plain_markitdown = None
+        self._markitdown_uses_llm = False
 
     def convert(self, source_path: Path, cancellation: CancellationToken) -> tuple[str, ConversionMetadata]:
         if source_path.suffix.lower() == ".pdf":
             return self.pdf_pipeline.convert(source_path, cancellation)
 
         converter = self._markitdown_converter()
-        result = converter.convert(str(source_path))
+        try:
+            result = converter.convert(str(source_path))
+            used_vision = self._markitdown_uses_llm
+            method = "MarkItDown+LLM" if used_vision else "MarkItDown"
+        except Exception as exc:
+            if not self._markitdown_uses_llm:
+                raise
+            self.log(
+                LogLevel.WARNING,
+                f"MarkItDown+LLM не обработал {source_path.name}: {exc}. Повторяю без LLM.",
+            )
+            result = self._plain_markitdown_converter().convert(str(source_path))
+            used_vision = False
+            method = "MarkItDown"
+
         text = getattr(result, "text_content", "")
         return text, ConversionMetadata(
-            method="MarkItDown",
+            method=method,
             used_ocr=False,
-            used_vision=self.config.vision_enabled,
+            used_vision=used_vision,
         )
 
     def _markitdown_converter(self):
@@ -56,9 +72,23 @@ class DocumentConverterService:
                         "структуру, подписи и ключевые выводы. Не добавляй вводных фраз."
                     ),
                 )
+                self._markitdown_uses_llm = True
                 return self._markitdown
             except Exception as exc:
                 self.log(LogLevel.WARNING, f"MarkItDown запущен без LLM: {exc}")
 
-        self._markitdown = MarkItDown()
+        self._markitdown = self._plain_markitdown_converter()
+        self._markitdown_uses_llm = False
         return self._markitdown
+
+    def _plain_markitdown_converter(self):
+        if self._plain_markitdown is not None:
+            return self._plain_markitdown
+
+        try:
+            from markitdown import MarkItDown
+        except ImportError as exc:
+            raise RuntimeError("Для конвертации нужен пакет markitdown[all]") from exc
+
+        self._plain_markitdown = MarkItDown()
+        return self._plain_markitdown
