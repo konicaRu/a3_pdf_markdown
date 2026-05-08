@@ -189,6 +189,7 @@ https://github.com/konicaRu/a3_pdf_markdown.git
 - MarkItDown для DOCX/PPTX/XLSX.
 - Fallback для DOCX/PPTX/XLSX: если MarkItDown+LLM падает на embedded image/vision hook, файл повторно конвертируется обычным MarkItDown без LLM.
 - Для PPTX после fallback без LLM приложение отдельно извлекает embedded-картинки через `python-pptx`, описывает их vision-моделью и вставляет описание рядом с соответствующей картинкой внутри секции слайда. Ошибки vision остаются в логах и не попадают в Markdown как описание.
+- Если PowerPoint shape выглядит как картинка, но не содержит embedded image, приложение рендерит весь слайд через установленный Microsoft PowerPoint и описывает визуальные элементы слайда целиком.
 - Отдельный PDF pipeline:
   - текстовый слой через PyMuPDF;
   - EasyOCR, если текстовый слой слабый;

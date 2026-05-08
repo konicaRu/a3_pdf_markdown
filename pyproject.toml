@@ -12,6 +12,7 @@ dependencies = [
     "easyocr>=1.7",
     "pillow>=10.0",
     "numpy>=1.26",
+    "pywin32>=306; platform_system == 'Windows'",
 ]
 
 [project.optional-dependencies]

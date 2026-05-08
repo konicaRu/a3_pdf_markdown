@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import re
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -23,8 +24,9 @@ PPTX_IMAGE_PROMPT = (
 @dataclass(slots=True)
 class PptxImageDescription:
     slide_number: int
-    image_number: int
+    image_number: int | None
     description: str
+    is_slide_level: bool = False
 
 
 SLIDE_MARKER_RE = re.compile(r"(<!--\s*Slide number:\s*(\d+)\s*-->)")
@@ -50,6 +52,7 @@ class PptxEnricher:
 
         presentation = Presentation(str(source_path))
         descriptions: list[PptxImageDescription] = []
+        slide_fallbacks: set[int] = set()
 
         for slide_index, slide in enumerate(presentation.slides, start=1):
             image_index = 0
@@ -59,12 +62,23 @@ class PptxEnricher:
 
                 image_index += 1
                 try:
-                    image = Image.open(io.BytesIO(shape.image.blob))
+                    image_blob = shape.image.blob
+                    image = Image.open(io.BytesIO(image_blob))
                     self.log(
                         LogLevel.INFO,
                         f"PPTX слайд {slide_index}: описание изображения {image_index}",
                     )
                     description = self._vision_client().describe_image(image, PPTX_IMAGE_PROMPT)
+                except ValueError as exc:
+                    if "no embedded image" in str(exc):
+                        self.log(
+                            LogLevel.WARNING,
+                            f"PPTX слайд {slide_index}, изображение {image_index}: "
+                            "нет embedded image, попробую описать слайд целиком",
+                        )
+                        slide_fallbacks.add(slide_index)
+                        continue
+                    raise
                 except (UnidentifiedImageError, OSError) as exc:
                     self.log(
                         LogLevel.WARNING,
@@ -89,7 +103,65 @@ class PptxEnricher:
                         )
                     )
 
+        for slide_index in sorted(slide_fallbacks):
+            description = self._describe_rendered_slide(source_path, slide_index)
+            if description:
+                descriptions.append(
+                    PptxImageDescription(
+                        slide_number=slide_index,
+                        image_number=None,
+                        description=description,
+                        is_slide_level=True,
+                    )
+                )
+
         return descriptions
+
+    def _describe_rendered_slide(self, source_path: Path, slide_number: int) -> str:
+        try:
+            slide_image = self._render_slide_with_powerpoint(source_path, slide_number)
+        except Exception as exc:
+            self.log(
+                LogLevel.WARNING,
+                f"PPTX слайд {slide_number}: не удалось отрендерить слайд через PowerPoint: {exc}",
+            )
+            return ""
+
+        try:
+            self.log(LogLevel.INFO, f"PPTX слайд {slide_number}: описание слайда целиком")
+            return self._vision_client().describe_image(slide_image, PPTX_IMAGE_PROMPT).strip()
+        except Exception as exc:
+            self.log(
+                LogLevel.WARNING,
+                f"PPTX слайд {slide_number}: vision не смог описать слайд целиком: {exc}",
+            )
+            return ""
+
+    def _render_slide_with_powerpoint(self, source_path: Path | str, slide_number: int) -> Image.Image:
+        try:
+            import pythoncom
+            import win32com.client
+        except ImportError as exc:
+            raise RuntimeError("для рендера PPTX нужен pywin32") from exc
+
+        source = str(Path(source_path).resolve())
+        with tempfile.TemporaryDirectory(prefix="a3_pptx_slide_") as temp_dir:
+            output_path = Path(temp_dir) / f"slide_{slide_number}.png"
+            pythoncom.CoInitialize()
+            app = None
+            presentation = None
+            try:
+                app = win32com.client.DispatchEx("PowerPoint.Application")
+                presentation = app.Presentations.Open(source, WithWindow=False)
+                presentation.Slides(slide_number).Export(str(output_path), "PNG")
+                with Image.open(output_path) as image:
+                    return image.convert("RGB").copy()
+            finally:
+                if presentation is not None:
+                    presentation.Close()
+                if app is not None:
+                    app.Quit()
+                pythoncom.CoUninitialize()
 
     def append_descriptions(self, markdown: str, source_path: Path) -> tuple[str, bool]:
         descriptions = self.describe_images(source_path)
@@ -146,13 +218,24 @@ class PptxEnricher:
             )
 
         enriched = IMAGE_MARKDOWN_RE.sub(replace, slide_body)
-        missing = [item for item in descriptions if item.image_number > image_counter]
+        missing = [
+            item
+            for item in descriptions
+            if item.image_number is not None and item.image_number > image_counter
+        ]
+        slide_level = [item for item in descriptions if item.is_slide_level]
         if missing:
             inserted = True
             extra = ["\n\n### Описания изображений слайда\n"]
             for item in missing:
                 extra.append(f"\n- Изображение {item.image_number}: {item.description}")
             enriched = enriched.rstrip() + "".join(extra) + "\n"
+        if slide_level:
+            inserted = True
+            extra = ["\n\n### Описание визуальных элементов слайда\n"]
+            for item in slide_level:
+                extra.append(f"\n{item.description}\n")
+            enriched = enriched.rstrip() + "".join(extra)
         return enriched, inserted
 
     def _append_fallback(
@@ -162,8 +245,9 @@ class PptxEnricher:
     ) -> str:
         parts = [markdown.rstrip(), "\n\n## Описания изображений\n"]
         for item in descriptions:
+            label = "слайд целиком" if item.is_slide_level else f"изображение {item.image_number}"
             parts.append(
-                f"\n### Слайд {item.slide_number}, изображение {item.image_number}\n\n"
+                f"\n### Слайд {item.slide_number}, {label}\n\n"
                 f"{item.description}\n"
             )
         return "".join(parts).strip() + "\n"
