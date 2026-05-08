@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QThread, Signal, Slot
-from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
+from PySide6.QtGui import QColor, QIcon, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -35,6 +35,7 @@ from a3_pdf_markdown.app.core.models import (
     RunStats,
     VisionProvider,
 )
+from a3_pdf_markdown.app.resources import APP_ICON_PATH
 
 
 def format_eta(seconds: float | None) -> str:
@@ -78,6 +79,8 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("A3 PDF Markdown")
+        if APP_ICON_PATH.exists():
+            self.setWindowIcon(QIcon(str(APP_ICON_PATH)))
         self.resize(1060, 720)
 
         self.config = load_config()
