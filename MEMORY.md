@@ -62,3 +62,9 @@
 - Служебная строка `Описание визуальных элементов` не должна быть Markdown-заголовком, чтобы не конкурировать с настоящими заголовками слайда; теперь это quote-блок.
 - Добавлена иконка приложения: `a3_pdf_markdown/assets/app_icon.ico` и `app_icon.png`. Иконка подключена к `QApplication` и `MainWindow`, для Windows задан AppUserModelID.
 - Добавлен запуск двойным кликом: `A3 PDF Markdown.vbs` без консоли и `A3 PDF Markdown.cmd` для debug-запуска с консолью.
+
+## 2026-05-08 GitHub sync
+
+Текущий рабочий MVP включает GUI, MarkItDown/PDF pipeline, PPTX image enrichment, PowerPoint slide-render fallback, app icon и double-click launchers.
+
+Перед отправкой в GitHub локальная ветка `main` была впереди `origin/main` на 8 коммитов. Все изменения нужно пушить в `https://github.com/konicaRu/a3_pdf_markdown.git`.
