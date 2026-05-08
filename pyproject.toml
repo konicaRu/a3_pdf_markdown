@@ -1,0 +1,31 @@
+[project]
+name = "a3-pdf-markdown"
+version = "0.1.0"
+description = "Desktop GUI converter for documents to Markdown"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "PySide6>=6.7",
+    "markitdown[all]>=0.1.0",
+    "openai>=1.0.0",
+    "pymupdf>=1.24",
+    "easyocr>=1.7",
+    "pillow>=10.0",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+build = [
+    "pyinstaller>=6.0",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+a3-pdf-markdown = "a3_pdf_markdown.app.main:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

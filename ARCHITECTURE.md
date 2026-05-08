@@ -41,35 +41,30 @@ Desktop-приложение для конвертации документов 
 
 ## Модули
 
-Предлагаемая структура будущего приложения:
+Текущая структура приложения:
 
 ```text
 a3_pdf_markdown/
+  __init__.py
   app/
     main.py
     ui/
       main_window.py
-      settings_dialog.py
-      log_model.py
     core/
       config.py
       models.py
       paths.py
       job_runner.py
-      output_naming.py
     converters/
       base.py
       markitdown_converter.py
       pdf_pipeline.py
       vision_client.py
       ocr_engine.py
-      docling_experimental.py
-    packaging/
-      pyinstaller.spec
   scripts/
     microsoft2_markitdown_converter.ipynb
     in в Markdow3_LLM.ipynb
-  tests/
+  pyproject.toml
   plan.md
   MEMORY.md
   ARCHITECTURE.md
@@ -167,12 +162,11 @@ GUI не выполняет конвертацию в главном UI-пото
 
 ## Git Workflow
 
-Текущая рабочая папка пока не является git-репозиторием.
+Текущая рабочая папка является git-репозиторием и подключена к:
 
-Нужно выбрать один вариант:
-
-1. Инициализировать git в текущей папке и подключить remote `https://github.com/konicaRu/a3_pdf_markdown.git`.
-2. Клонировать репозиторий заново и перенести текущие файлы туда.
+```text
+https://github.com/konicaRu/a3_pdf_markdown.git
+```
 
 Команда пользователя `git save` будет означать:
 
@@ -180,3 +174,27 @@ GUI не выполняет конвертацию в главном UI-пото
 2. добавить релевантные файлы;
 3. сделать commit с коротким сообщением;
 4. не делать push без отдельной команды пользователя.
+
+## Реализовано в текущем MVP scaffold
+
+- PySide6 окно с выбором папок, настройками OCR/Vision, provider selector, Start/Stop.
+- Background job через `QThread`, UI не должен блокироваться во время обработки.
+- Сохранение настроек в `%USERPROFILE%/.a3_pdf_markdown/config.json`.
+- Сбор файлов `.pdf`, `.docx`, `.pptx`, `.xlsx`.
+- Уникальные выходные имена через `name_2.md`, `name_3.md`.
+- Атомарная запись результата через временный `.tmp` файл.
+- MarkItDown для DOCX/PPTX/XLSX.
+- Отдельный PDF pipeline:
+  - текстовый слой через PyMuPDF;
+  - EasyOCR, если текстовый слой слабый;
+  - vision только для визуальных страниц/слабого OCR;
+  - LM Studio как OpenAI-compatible endpoint;
+  - Ollama через `/api/chat`.
+
+## Ближайшие технические задачи
+
+- Прогнать GUI вручную на реальном Windows-окружении.
+- Проверить один маленький DOCX/PPTX и один PDF.
+- Уточнить качество эвристики `_page_has_visuals`.
+- Добавить CLI smoke test без GUI.
+- Добавить PyInstaller spec после стабилизации запуска.

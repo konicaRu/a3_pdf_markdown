@@ -33,5 +33,25 @@
 
 Открытые вопросы:
 
-- Нужно уточнить, инициализируем ли git-репозиторий в текущей папке или клонируем `https://github.com/konicaRu/a3_pdf_markdown`.
-- Нужно определить точное поведение `git save`: алиас, скрипт или договоренность, что команда пользователя означает commit текущих изменений.
+- Git настроен в текущей папке, remote: `https://github.com/konicaRu/a3_pdf_markdown.git`.
+- Команда `git save` настроена как локальный git alias: делает `git add -A` и `git commit -m`.
+- Push в GitHub делается отдельной командой `git push`.
+
+## 2026-05-08 MVP scaffold
+
+Создан первый каркас приложения:
+
+- `pyproject.toml` с зависимостями PySide6, MarkItDown, PyMuPDF, EasyOCR, OpenAI client.
+- `a3_pdf_markdown/app/main.py` - точка входа.
+- `a3_pdf_markdown/app/ui/main_window.py` - MVP GUI.
+- `a3_pdf_markdown/app/core/` - конфиг, модели, сбор файлов, runner.
+- `a3_pdf_markdown/app/converters/` - MarkItDown service, PDF pipeline, OCR, vision clients.
+
+Проверки:
+
+- `uv run python -m compileall a3_pdf_markdown` - успешно.
+- Импорт `AppConfig` и `DocumentConverterService` - успешно.
+
+Техническая заметка:
+
+- Проект ограничен `requires-python = ">=3.11,<3.14"`, потому что OCR-зависимости, в частности `onnxruntime`, пока не поддерживают CPython 3.14.
