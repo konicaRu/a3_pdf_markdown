@@ -114,6 +114,7 @@ class MainWindow(QMainWindow):
         settings_layout = QFormLayout(settings_group)
 
         self.recursive_check = QCheckBox("Обрабатывать вложенные папки")
+        self.lowercase_check = QCheckBox("Имя .md в нижний регистр")
         self.ocr_check = QCheckBox("OCR")
         self.vision_check = QCheckBox("Vision")
 
@@ -135,6 +136,7 @@ class MainWindow(QMainWindow):
 
         toggles = QHBoxLayout()
         toggles.addWidget(self.recursive_check)
+        toggles.addWidget(self.lowercase_check)
         toggles.addWidget(self.ocr_check)
         toggles.addWidget(self.vision_check)
         toggles.addStretch(1)
@@ -183,6 +185,7 @@ class MainWindow(QMainWindow):
         self.input_edit.setText(str(self.config.input_dir) if self.config.input_dir else "")
         self.output_edit.setText(str(self.config.output_dir) if self.config.output_dir else "")
         self.recursive_check.setChecked(self.config.recursive)
+        self.lowercase_check.setChecked(self.config.lowercase_output_filename)
         self.ocr_check.setChecked(self.config.ocr_enabled)
         self.vision_check.setChecked(self.config.vision_enabled)
         index = self.provider_combo.findData(self.config.vision_provider.value)
@@ -198,6 +201,7 @@ class MainWindow(QMainWindow):
             input_dir=Path(self.input_edit.text()) if self.input_edit.text().strip() else None,
             output_dir=Path(self.output_edit.text()) if self.output_edit.text().strip() else None,
             recursive=self.recursive_check.isChecked(),
+            lowercase_output_filename=self.lowercase_check.isChecked(),
             ocr_enabled=self.ocr_check.isChecked(),
             vision_enabled=self.vision_check.isChecked(),
             vision_provider=provider,

@@ -60,7 +60,11 @@ class JobRunner:
                 break
 
             relative_source = source_path.relative_to(self.config.input_dir)
-            output_path = unique_output_path(self.config.output_dir, relative_source)
+            output_path = unique_output_path(
+                self.config.output_dir,
+                relative_source,
+                lowercase_filename=self.config.lowercase_output_filename,
+            )
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             self._progress(stats, str(relative_source), "Конвертация")
@@ -134,4 +138,3 @@ class JobRunner:
                 eta_seconds=stats.eta_seconds,
             )
         )
-

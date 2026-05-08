@@ -19,6 +19,7 @@ Desktop-приложение для конвертации документов 
 - панель статистики;
 - сохранение настроек между запусками;
 - один `.md` файл на каждый исходный файл;
+- настройка имени выходного файла: оставить как есть или привести к нижнему регистру;
 - разрешение конфликтов имен через `name_2.md`, `name_3.md`.
 
 Не входит в MVP:
@@ -117,6 +118,7 @@ Vision-модель не используется для:
 - input directory;
 - output directory;
 - recursive mode;
+- lowercase output filename;
 - overwrite/conflict mode, по умолчанию `rename`;
 - OCR enabled;
 - vision enabled;
@@ -182,6 +184,7 @@ https://github.com/konicaRu/a3_pdf_markdown.git
 - Сохранение настроек в `%USERPROFILE%/.a3_pdf_markdown/config.json`.
 - Сбор файлов `.pdf`, `.docx`, `.pptx`, `.xlsx`.
 - Уникальные выходные имена через `name_2.md`, `name_3.md`.
+- Опциональное приведение имени выходного `.md` файла к нижнему регистру.
 - Атомарная запись результата через временный `.tmp` файл.
 - MarkItDown для DOCX/PPTX/XLSX.
 - Отдельный PDF pipeline:

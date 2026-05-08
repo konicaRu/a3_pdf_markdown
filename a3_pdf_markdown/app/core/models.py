@@ -24,6 +24,7 @@ class AppConfig:
     input_dir: Path | None = None
     output_dir: Path | None = None
     recursive: bool = False
+    lowercase_output_filename: bool = False
     ocr_enabled: bool = True
     vision_enabled: bool = True
     vision_provider: VisionProvider = VisionProvider.LM_STUDIO
@@ -84,4 +85,3 @@ class RunStats:
         if self.processed == 0 or remaining <= 0:
             return None
         return remaining * self.average_seconds
-
