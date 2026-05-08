@@ -5,6 +5,7 @@ from typing import Callable, Protocol
 
 from a3_pdf_markdown.app.converters.base import ConversionMetadata
 from a3_pdf_markdown.app.converters.pdf_pipeline import PdfPipeline
+from a3_pdf_markdown.app.converters.pptx_enrichment import PptxEnricher
 from a3_pdf_markdown.app.converters.vision_client import OpenAICompatibleVisionClient
 from a3_pdf_markdown.app.core.models import AppConfig, LogLevel, VisionProvider
 
@@ -18,6 +19,7 @@ class DocumentConverterService:
         self.config = config
         self.log = log
         self.pdf_pipeline = PdfPipeline(config, log)
+        self.pptx_enricher = PptxEnricher(config, log)
         self._markitdown = None
         self._plain_markitdown = None
         self._markitdown_uses_llm = False
@@ -43,6 +45,12 @@ class DocumentConverterService:
             method = "MarkItDown"
 
         text = getattr(result, "text_content", "")
+        if source_path.suffix.lower() == ".pptx" and self.config.vision_enabled and not used_vision:
+            text, enriched = self.pptx_enricher.append_descriptions(text, source_path)
+            if enriched:
+                used_vision = True
+                method = f"{method}+PPTX images"
+
         return text, ConversionMetadata(
             method=method,
             used_ocr=False,
