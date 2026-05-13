@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv\\\\Scripts\\\\python.exe -c \"from a3_pdf_markdown.app.converters.pdf_pipeline import PdfPipeline; print\\('OK'\\)\")"
+    ]
+  }
+}

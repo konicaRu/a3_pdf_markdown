@@ -71,9 +71,22 @@ class PdfPipeline:
     def _convert_page(self, page, page_index: int, total_pages: int) -> PdfPageResult:
         self.log(LogLevel.INFO, f"PDF страница {page_index}/{total_pages}")
 
-        text = self._extract_text_layer(page)
         used_ocr = False
         used_vision = False
+
+        # Сначала пробуем структурное извлечение таблиц
+        tables_md, table_bboxes = self._extract_tables(page)
+        if tables_md:
+            self.log(LogLevel.INFO, f"Страница {page_index}: найдено таблиц: {len(tables_md)}")
+            non_table_text = self._extract_text_outside_tables(page, table_bboxes)
+            page_parts = [f"## Страница {page_index}"]
+            if non_table_text.strip():
+                page_parts.append(non_table_text.strip())
+            page_parts.extend(tables_md)
+            return PdfPageResult("\n\n".join(page_parts), used_ocr, used_vision)
+
+        # Таблиц нет — текстовый слой + OCR fallback
+        text = self._extract_text_layer(page)
 
         if len(text) < self.config.min_text_chars_per_page and self.config.ocr_enabled:
             image = self._render_page(page)
@@ -103,6 +116,61 @@ class PdfPipeline:
             page_parts.append("### Визуальные элементы\n\n" + visual_note.strip())
 
         return PdfPageResult("\n\n".join(page_parts), used_ocr, used_vision)
+
+    def _extract_tables(self, page) -> tuple[list[str], list[tuple[float, float, float, float]]]:
+        """Извлекает таблицы через PyMuPDF и возвращает (список MD-таблиц, список bbox)."""
+        try:
+            finder = page.find_tables()
+            if not finder.tables:
+                return [], []
+            tables_md = []
+            bboxes = []
+            for table in finder.tables:
+                rows = table.extract()
+                if not rows:
+                    continue
+                md = self._rows_to_markdown(rows)
+                if md:
+                    tables_md.append(md)
+                    r = table.bbox
+                    bboxes.append((r[0], r[1], r[2], r[3]))
+            return tables_md, bboxes
+        except Exception as exc:
+            self.log(LogLevel.WARNING, f"Ошибка при поиске таблиц: {exc}")
+            return [], []
+
+    def _rows_to_markdown(self, rows: list[list]) -> str:
+        if not rows:
+            return ""
+
+        def cell(v: object) -> str:
+            return str(v).replace("\n", " ").replace("|", "\\|").strip() if v is not None else ""
+
+        header = rows[0]
+        lines = ["| " + " | ".join(cell(c) for c in header) + " |"]
+        lines.append("| " + " | ".join("---" for _ in header) + " |")
+        for row in rows[1:]:
+            lines.append("| " + " | ".join(cell(c) for c in row) + " |")
+        return "\n".join(lines)
+
+    def _extract_text_outside_tables(
+        self, page, table_bboxes: list[tuple[float, float, float, float]]
+    ) -> str:
+        blocks = page.get_text("blocks") or []
+        lines = []
+        for block in blocks:
+            if block[6] != 0:
+                continue
+            bx0, by0, bx1, by1 = block[:4]
+            inside_table = any(
+                min(bx1, tx1) > max(bx0, tx0) and min(by1, ty1) > max(by0, ty0)
+                for tx0, ty0, tx1, ty1 in table_bboxes
+            )
+            if not inside_table:
+                text = block[4].strip()
+                if text:
+                    lines.append(text)
+        return "\n".join(lines)
 
     def _extract_text_layer(self, page) -> str:
         text = page.get_text("text") or ""
